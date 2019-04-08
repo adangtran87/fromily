@@ -58,7 +58,7 @@ func main() {
 	}
 	admin_regex = regexp.MustCompile(`^` + config.AdminPrefix + `(\w+)`)
 
-	// Register the messageCreate func as a callback for MessageCreate events.
+	discord.AddHandler(ready)
 	discord.AddHandler(messageCreate)
 
 	// Open a websocket connection to Discord and begin listening.
@@ -76,6 +76,14 @@ func main() {
 
 	// Cleanly close down the Discord session.
 	discord.Close()
+}
+
+func ready(s *discordgo.Session, event *discordgo.Ready) {
+	// event.Guilds retreives a list of connected guild ids
+	for _, guild := range event.Guilds {
+		guildInfo, _ := s.Guild(guild.ID)
+		fmt.Printf("%s:%s\n", guildInfo.Name, guildInfo.ID)
+	}
 }
 
 // This function will be called (due to AddHandler above) every time a new
