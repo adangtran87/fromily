@@ -9,8 +9,17 @@ import (
 	"regexp"
 	"syscall"
 
+	"github.com/adangtran87/fromily/fromilyclient"
 	"github.com/bwmarrin/discordgo"
 )
+
+type Configs struct {
+	Token        string   `json:"TOKEN"`
+	Prefix       string   `json:"PREFIX"`
+	AdminPrefix  string   `json:"ADMIN_PREFIX"`
+	Admins       []string `json:"ADMINS"`
+	FromilyToken string   `json:"FROMILY_TOKEN"`
+}
 
 // Config struct populated in main
 var config = Configs{}
@@ -34,7 +43,20 @@ func main() {
 		panic(err)
 	}
 
-	// fmt.Printf("%s", config.Token)
+	// Create fromily-server session
+	fromily := fromilyclient.New(config.FromilyToken)
+	if err != nil {
+		fmt.Println("Error creating fromily session,", err)
+	}
+
+	fromilyservers, err := fromily.GetServers()
+	if err != nil {
+		fmt.Println("Error getting server data,", err)
+	} else {
+		for _, server := range fromilyservers {
+			fmt.Printf("%+v\n", server)
+		}
+	}
 
 	// Create new Discord session
 	discord, err := discordgo.New("Bot " + config.Token)
