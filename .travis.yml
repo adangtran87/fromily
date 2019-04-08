@@ -3,4 +3,5 @@ go:
   - 1.12
 
 script:
+  - make deps
   - make build
