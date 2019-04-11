@@ -17,26 +17,14 @@ type FromilyClient struct {
 	BaseUrl string
 }
 
-type UserData struct {
-	ServerId uint64 `json:"server"`
-	Dpoint   uint32 `json:"dpoint"`
-}
-
-type ServerData struct {
-	UserId uint64 `json:"user"`
-	Dpoint uint32 `json:"dpoint"`
-}
-
 type FromilyUser struct {
-	Id   uint64      `json:"id"`
-	Name string      `json:"user_str"`
-	Data []*UserData `json:"userdata"`
+	Id   uint64 `json:"id"`
+	Name string `json:"name"`
 }
 
 type FromilyServer struct {
-	Id   uint64        `json:"id"`
-	Name string        `json:"server_str"`
-	Data []*ServerData `json:"serverdata"`
+	Id   uint64 `json:"id"`
+	Name string `json:"name"`
 }
 
 // Create the Client object
