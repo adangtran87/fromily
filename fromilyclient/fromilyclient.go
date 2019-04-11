@@ -12,30 +12,30 @@ import (
 	"net/http"
 )
 
-type FromilyClient struct {
+type Client struct {
 	Token   string
 	BaseUrl string
 }
 
-type FromilyUser struct {
+type User struct {
 	Id   uint64 `json:"id"`
 	Name string `json:"name"`
 }
 
-type FromilyServer struct {
+type Server struct {
 	Id   uint64 `json:"id"`
 	Name string `json:"name"`
 }
 
 // Create the Client object
-func New(token string) *FromilyClient {
-	return &FromilyClient{
+func New(token string) *Client {
+	return &Client{
 		Token:   token,
 		BaseUrl: "http://localhost:8000/v1/",
 	}
 }
 
-func (s *FromilyClient) doRequest(req *http.Request) ([]byte, error) {
+func (s *Client) doRequest(req *http.Request) ([]byte, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -53,7 +53,7 @@ func (s *FromilyClient) doRequest(req *http.Request) ([]byte, error) {
 }
 
 // Client APIs
-func (s *FromilyClient) GetServers() ([]*FromilyServer, error) {
+func (s *Client) GetServers() ([]*Server, error) {
 	url := fmt.Sprintf(s.BaseUrl + "servers/")
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *FromilyClient) GetServers() ([]*FromilyServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	var data []*FromilyServer
+	var data []*Server
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		return nil, err
