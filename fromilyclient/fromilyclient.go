@@ -10,7 +10,22 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 )
+
+type DateType time.Time
+
+func (d *DateType) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		return err
+	}
+	*d = DateType(t)
+	return nil
+}
 
 type Client struct {
 	Token   string
@@ -25,6 +40,19 @@ type User struct {
 type Server struct {
 	Id   uint64 `json:"id"`
 	Name string `json:"name"`
+}
+
+type DPointRecord struct {
+	Points int32    `json:"points"`
+	Reason string   `json:"reason"`
+	Date   DateType `json:"date"`
+}
+
+type UserServerData struct {
+	User       uint64          `json:"user"`
+	Server     uint64          `json:"server"`
+	Dpoints    uint64          `json:"dpoints"`
+	DPoint_log []*DPointRecord `json:"dpoint_log"`
 }
 
 // Create the Client object
@@ -64,6 +92,24 @@ func (s *Client) GetServers() ([]*Server, error) {
 		return nil, err
 	}
 	var data []*Server
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (s *Client) GetServerData(server uint64) ([]*UserServerData, error) {
+	url := fmt.Sprintf(s.BaseUrl+"userserverdata/?server=%s", strconv.FormatUint(server, 10))
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	bytes, err := s.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var data []*UserServerData
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		return nil, err

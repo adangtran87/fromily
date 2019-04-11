@@ -58,6 +58,15 @@ func main() {
 		}
 	}
 
+	userdata, err := fromily.GetServerData(fromilyservers[0].Id)
+	if err != nil {
+		fmt.Println("Error getting server data,", err)
+	} else {
+		for _, data := range userdata {
+			fmt.Printf("%+v\n", data)
+		}
+	}
+
 	// Create new Discord session
 	discord, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
