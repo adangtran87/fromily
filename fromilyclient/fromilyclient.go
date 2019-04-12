@@ -37,9 +37,14 @@ type User struct {
 	Name string `json:"name"`
 }
 
+type UserData struct {
+	User User `json:"user"`
+}
+
 type Server struct {
-	Id   uint64 `json:"id"`
-	Name string `json:"name"`
+	Id       uint64     `json:"id"`
+	Name     string     `json:"name"`
+	UserData []UserData `json:"userdata,omitempty"`
 }
 
 type DPointRecord struct {
@@ -51,8 +56,8 @@ type DPointRecord struct {
 type UserServerData struct {
 	User       uint64          `json:"user"`
 	Server     uint64          `json:"server"`
-	Dpoints    uint64          `json:"dpoints"`
-	DPoint_log []*DPointRecord `json:"dpoint_log"`
+	Dpoints    uint64          `json:"dpoints,omitempty"`
+	DPoint_log []*DPointRecord `json:"dpoint_log,omitempty"`
 }
 
 // Create the Client object
