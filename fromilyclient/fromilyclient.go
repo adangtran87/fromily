@@ -85,9 +85,7 @@ func (s *Client) doRequest(req *http.Request) ([]byte, error) {
 	return body, nil
 }
 
-// Client APIs
-func (s *Client) GetServers() ([]*Server, error) {
-	url := fmt.Sprintf(s.BaseUrl + "servers/")
+func (s *Client) get(url string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -96,6 +94,13 @@ func (s *Client) GetServers() ([]*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	return bytes, nil
+}
+
+// Client APIs
+func (s *Client) GetServers() ([]*Server, error) {
+	url := fmt.Sprintf(s.BaseUrl + "servers/")
+	bytes, err := s.get(url)
 	var data []*Server
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
@@ -106,18 +111,19 @@ func (s *Client) GetServers() ([]*Server, error) {
 
 func (s *Client) GetServerData(server uint64) ([]*UserServerData, error) {
 	url := fmt.Sprintf(s.BaseUrl+"userserverdata/?server=%s", strconv.FormatUint(server, 10))
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	bytes, err := s.doRequest(req)
-	if err != nil {
-		return nil, err
-	}
+	bytes, err := s.get(url)
 	var data []*UserServerData
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+func (s *Client) GetUserServerData(user uint64, server uint64) (UserServerData, error) {
+	url := fmt.Sprintf(s.BaseUrl+"userserverdata/?user=%s&server=%s", strconv.FormatUint(user, 10), strconv.FormatUint(server, 10))
+	bytes, err := s.get(url)
+	var data []UserServerData
+	err = json.Unmarshal(bytes, &data)
+	return data[0], err
 }
