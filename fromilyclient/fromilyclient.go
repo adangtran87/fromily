@@ -6,6 +6,7 @@
 package fromilyclient
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -44,7 +45,8 @@ type UserData struct {
 type Server struct {
 	Id       uint64     `json:"id"`
 	Name     string     `json:"name"`
-	UserData []UserData `json:"userdata,omitempty"`
+	Dictator uint64     `json:"dictator,omitempty"`
+	Users    []UserData `json:"userdata,omitempty"`
 }
 
 type DPointRecord struct {
@@ -79,10 +81,11 @@ func (s *Client) doRequest(req *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if 200 != resp.StatusCode {
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return body, nil
+	} else {
 		return nil, fmt.Errorf("%s", body)
 	}
-	return body, nil
 }
 
 func (s *Client) get(url string) ([]byte, error) {
@@ -95,6 +98,17 @@ func (s *Client) get(url string) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
+}
+
+func (s *Client) post(url string, j []byte) error {
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(j))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Token %s", s.Token))
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	_, err = s.doRequest(req)
+	return err
 }
 
 // Client APIs
@@ -126,4 +140,13 @@ func (s *Client) GetUserServerData(user uint64, server uint64) (UserServerData, 
 	var data []UserServerData
 	err = json.Unmarshal(bytes, &data)
 	return data[0], err
+}
+
+func (s *Client) CreateServer(server *Server) error {
+	url := fmt.Sprintf(s.BaseUrl + "servers/")
+	j, err := json.Marshal(server)
+	if err != nil {
+		return err
+	}
+	return s.post(url, j)
 }

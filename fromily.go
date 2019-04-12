@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"syscall"
 
 	"github.com/adangtran87/fromily/fromilyclient"
@@ -30,6 +31,9 @@ var prefix_regex *regexp.Regexp
 // Admin command regex configured in main
 var admin_regex *regexp.Regexp
 
+// FIXME: Figure out a better way to create a global variable
+var Fromily = fromilyclient.New("0")
+
 // Opens a discord session and monitors messages sent
 // Processes commands if messages have the appropriate prefix
 func main() {
@@ -44,25 +48,9 @@ func main() {
 	}
 
 	// Create fromily-server session
-	fromily := fromilyclient.New(config.FromilyToken)
+	Fromily = fromilyclient.New(config.FromilyToken)
 	if err != nil {
 		fmt.Println("Error creating fromily session,", err)
-	}
-
-	fromilyservers, err := fromily.GetServers()
-	if err != nil {
-		fmt.Println("Error getting server data,", err)
-	} else {
-		for _, server := range fromilyservers {
-			fmt.Printf("%+v\n", server)
-		}
-	}
-
-	usd, err := fromily.GetUserServerData(0, 0)
-	if err == nil {
-		fmt.Printf("%+v\n", usd)
-	} else {
-		fmt.Println("Error getting userserverdata,", err)
 	}
 
 	// Create new Discord session
@@ -107,11 +95,42 @@ func main() {
 	discord.Close()
 }
 
+func guildInServer(servers []*fromilyclient.Server, id uint64) bool {
+	for _, server := range servers {
+		if id == server.Id {
+			return true
+		}
+	}
+	return false
+}
+
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	// event.Guilds retreives a list of connected guild ids
 	for _, guild := range event.Guilds {
 		guildInfo, _ := s.Guild(guild.ID)
 		fmt.Printf("%s:%s\n", guildInfo.Name, guildInfo.ID)
+
+		// Check if guild exists
+		servers, err := Fromily.GetServers()
+		if err != nil {
+			fmt.Println("Error retrieveing servers,", err)
+		}
+
+		id, err := strconv.ParseUint(guild.ID, 10, 64)
+		if err != nil {
+			fmt.Println("Error converting guild ID into str,", err)
+		} else {
+			if guildInServer(servers, id) == false {
+				server := fromilyclient.Server{
+					Id:   id,
+					Name: guild.Name,
+				}
+				err := Fromily.CreateServer(&server)
+				if err != nil {
+					fmt.Println("Error creating server,", err)
+				}
+			}
+		}
 	}
 }
 
