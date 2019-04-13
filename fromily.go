@@ -95,15 +95,6 @@ func main() {
 	discord.Close()
 }
 
-func guildInServer(servers []*fromilyclient.Server, id uint64) bool {
-	for _, server := range servers {
-		if id == server.Id {
-			return true
-		}
-	}
-	return false
-}
-
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	// event.Guilds retreives a list of connected guild ids
 	for _, guild := range event.Guilds {
@@ -116,16 +107,27 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			fmt.Println("Error retrieveing servers,", err)
 		}
 
-		id, err := strconv.ParseUint(guild.ID, 10, 64)
+		// Populate ServerMap
+		ServerMap.ProcessDataIntoServerMap(servers)
+		fmt.Printf("%+v\n", ServerMap)
+
 		if err != nil {
 			fmt.Println("Error converting guild ID into str,", err)
 		} else {
-			if guildInServer(servers, id) == false {
+			if ServerMap.ServerExists(guild.ID) {
+				fmt.Println("Guild exists: ", guild.ID)
+			} else {
+				fmt.Println("Creating guild: ", guild.ID)
+				guildId, err := strconv.ParseUint(guild.ID, 10, 64)
+				if err != nil {
+					fmt.Println("Error converting to uint64,", guild.ID)
+					return
+				}
 				server := fromilyclient.Server{
-					Id:   id,
+					Id:   guildId,
 					Name: guild.Name,
 				}
-				err := Fromily.CreateServer(&server)
+				err = ServerMap.AddServer(&server)
 				if err != nil {
 					fmt.Println("Error creating server,", err)
 				}
