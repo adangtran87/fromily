@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -61,12 +62,24 @@ func GetRoleCount(s *discordgo.Session, guild string) (roleSummary []*RoleInfo) 
 }
 
 // Discord Utility functions
-func DUTIL_ExtractUser(user string) (string, bool) {
+
+// Return empty string if invalid user
+func DUTIL_ExtractUserMention(user string) string {
 	regex := regexp.MustCompile(`<@(\d+)>`)
 	parsedUser := regex.FindStringSubmatch(user)
 	if parsedUser == nil {
-		return "", false
+		return ""
 	} else {
-		return parsedUser[1], true
+		return parsedUser[1]
 	}
+}
+
+// Validate if string is a valid userid; basically is it all digits?
+// Return empty string if invalid user
+func DUTIL_ValidateUser(user string) string {
+	_, err := strconv.ParseUint(user, 10, 64)
+	if err != nil {
+		return ""
+	}
+	return user
 }

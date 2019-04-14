@@ -96,8 +96,8 @@ func dictator_set(s *discordgo.Session, m *discordgo.MessageCreate, sub string) 
 	if len(cmdSlice) > 1 {
 		return
 	}
-	userid, ok := DUTIL_ExtractUser(sub)
-	if ok == false {
+	userid := DUTIL_ExtractUserMention(sub)
+	if userid == "" {
 		return
 	} else {
 		if Backend.SetDictator(m.GuildID, userid) {
@@ -117,7 +117,7 @@ func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 	}
 
 	var out strings.Builder
-	out.WriteString(fmt.Sprintf("DPoints: %s", data.DPoints))
+	out.WriteString(fmt.Sprintf("Total: %s", data.DPoints))
 
 	if len(data.DPointLog) > 0 {
 		out.WriteString("\n\nLast 5 Records:\n")
@@ -144,16 +144,31 @@ func dpoints_give(s *discordgo.Session, m *discordgo.MessageCreate, sub string) 
 		s.ChannelMessageSend(m.ChannelID, "Begone pleb.")
 	}
 
-	// Parse user
-	user, ok := DUTIL_ExtractUser(cmdSlice[0])
-	if ok == false {
-		// Not a valid user string
+	// Parse user; if there is a mention extract user from it
+	// If there is not a mention, validate ID
+	numMentions := len(m.Mentions)
+	var user string
+	if numMentions > 1 {
+		// Do not allow more than one mention in this command.
+		return
+	} else if numMentions == 1 {
+		user = DUTIL_ExtractUserMention(cmdSlice[0])
+	} else {
+		user = DUTIL_ValidateUser(cmdSlice[0])
+	}
+	if user == "" {
+		// Invalid user
+		return
+	}
+
+	if Backend.UserDataExists(m.GuildID, user) == false {
+		// Not a valid user for this server
 		return
 	}
 
 	userinfo := Backend.GetUser(user)
 	if userinfo == nil {
-		// Not a valid user
+		// User does not exist for some reason
 		return
 	}
 
