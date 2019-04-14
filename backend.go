@@ -24,6 +24,17 @@ type NewUser struct {
 	Name string
 }
 
+type DPointRecord struct {
+	Points string
+	Reason string
+	Date   string
+}
+
+type UserData struct {
+	DPoints   string
+	DPointLog []*DPointRecord
+}
+
 /**
  * ServerInfo
  *
@@ -165,6 +176,29 @@ func (b *ServerBackend) UserDataExists(server, user string) bool {
 
 	_, ok = serverInfo.UserMap[userId]
 	return ok
+}
+
+func (b *ServerBackend) GetUserData(server, user string) *UserData {
+	if b.UserDataExists(server, user) == false {
+		return nil
+	}
+	data, err := b.Client.GetUserServerData(server, user)
+	if err != nil {
+		return nil
+	}
+	// Parse from fromilyclient.UserServerData into UserData
+	var userdata = UserData{
+		DPoints: strconv.FormatInt(int64(data.Dpoints), 10),
+	}
+	for _, log := range data.DPoint_log {
+		record := DPointRecord{
+			Points: strconv.FormatInt(int64(log.Points), 10),
+			Reason: log.Reason,
+			Date:   log.Date.Format("2006-01-02"),
+		}
+		userdata.DPointLog = append(userdata.DPointLog, &record)
+	}
+	return &userdata
 }
 
 func (b *ServerBackend) AddUserData(server string, user *NewUser) bool {
@@ -368,4 +402,13 @@ func (b *ServerBackend) GetDictator(server string) string {
 	}
 
 	return user.Name
+}
+
+func (b *ServerBackend) IsDictator(server, user string) bool {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		return false
+	}
+
+	return serverInfo.Dictator == user
 }

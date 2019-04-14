@@ -52,6 +52,24 @@ var Commands = CommandSet{
 			},
 			Help: "Return the current dictator",
 		},
+		"dpoints": &Command{
+			Admin: false,
+			Name:  "dpoints",
+			Cmd:   dpoints,
+			Subset: &CommandSet{
+				Prefix: "",
+				Commands: CommandMap{
+					"give": &Command{
+						Admin:  true,
+						Name:   "dpoints give",
+						Cmd:    dpoints_give,
+						Subset: nil,
+						Help:   "Give the dpoints :eyes:",
+					},
+				},
+			},
+			Help: "Return the number of dpoints for the user",
+		},
 	},
 }
 
@@ -86,6 +104,33 @@ func dictator_set(s *discordgo.Session, m *discordgo.MessageCreate, sub string) 
 			dictator(s, m, "")
 		}
 	}
+}
+
+func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+	//@TODO Support querying other people
+	if sub != "" {
+		return
+	}
+	data := Backend.GetUserData(m.GuildID, m.Author.ID)
+	if data == nil {
+		return
+	}
+
+	var out strings.Builder
+	out.WriteString(fmt.Sprintf("DPoints: %s", data.DPoints))
+
+	if len(data.DPointLog) > 0 {
+		out.WriteString("\n\nLast 5 Records:\n")
+	}
+
+	for _, record := range data.DPointLog {
+		out.WriteString(fmt.Sprintf("- %s: %s \"%s\"\n", record.Date, record.Points, record.Reason))
+	}
+
+	s.ChannelMessageSend(m.ChannelID, out.String())
+}
+
+func dpoints_give(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 }
 
 func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate, prefix string, sub string) {

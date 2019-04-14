@@ -28,6 +28,11 @@ func (d *DateType) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (d *DateType) Format(s string) string {
+	t := time.Time(*d)
+	return t.Format(s)
+}
+
 type Client struct {
 	Token   string
 	BaseUrl string
@@ -50,15 +55,15 @@ type Server struct {
 }
 
 type DPointRecord struct {
-	Points int32    `json:"points"`
-	Reason string   `json:"reason"`
-	Date   DateType `json:"date"`
+	Points int32     `json:"points"`
+	Reason string    `json:"reason"`
+	Date   *DateType `json:"date"`
 }
 
 type UserServerData struct {
 	User       uint64          `json:"user"`
 	Server     uint64          `json:"server"`
-	Dpoints    uint64          `json:"dpoints,omitempty"`
+	Dpoints    int32           `json:"dpoints,omitempty"`
 	DPoint_log []*DPointRecord `json:"dpoint_log,omitempty"`
 }
 
@@ -167,12 +172,13 @@ func (s *Client) GetServerData(server uint64) ([]*UserServerData, error) {
 	return data, nil
 }
 
-func (s *Client) GetUserServerData(user uint64, server uint64) (UserServerData, error) {
-	url := fmt.Sprintf(s.BaseUrl+"userserverdata/?user=%s&server=%s", strconv.FormatUint(user, 10), strconv.FormatUint(server, 10))
+//@TODO Keep these as strings?
+func (s *Client) GetUserServerData(server, user string) (*UserServerData, error) {
+	url := fmt.Sprintf(s.BaseUrl+"userserverdata/?user=%s&server=%s", user, server)
 	bytes, err := s.get(url)
 	var data []UserServerData
 	err = json.Unmarshal(bytes, &data)
-	return data[0], err
+	return &data[0], err
 }
 
 func (s *Client) CreateServer(server *Server) error {
