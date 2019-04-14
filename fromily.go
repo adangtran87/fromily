@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"strconv"
 	"syscall"
 
 	"github.com/adangtran87/fromily/fromilyclient"
@@ -111,26 +110,17 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 		ServerMap.ProcessDataIntoServerMap(servers)
 		fmt.Printf("%+v\n", ServerMap)
 
-		if err != nil {
-			fmt.Println("Error converting guild ID into str,", err)
+		if ServerMap.ServerExists(guild.ID) {
+			fmt.Println("Guild exists: ", guild.ID)
 		} else {
-			if ServerMap.ServerExists(guild.ID) {
-				fmt.Println("Guild exists: ", guild.ID)
-			} else {
-				fmt.Println("Creating guild: ", guild.ID)
-				guildId, err := strconv.ParseUint(guild.ID, 10, 64)
-				if err != nil {
-					fmt.Println("Error converting to uint64,", guild.ID)
-					return
-				}
-				server := fromilyclient.Server{
-					Id:   guildId,
-					Name: guild.Name,
-				}
-				err = ServerMap.AddServer(&server)
-				if err != nil {
-					fmt.Println("Error creating server,", err)
-				}
+			fmt.Println("Creating guild: ", guild.ID)
+
+			server := NewServer{
+				Id:   guild.ID,
+				Name: guild.Name,
+			}
+			if ServerMap.AddServer(&server) == false {
+				fmt.Println("Error creating server,", err)
 			}
 		}
 	}
