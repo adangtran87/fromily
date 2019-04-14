@@ -131,6 +131,49 @@ func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 }
 
 func dpoints_give(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+	cmdSlice := strings.SplitN(sub, " ", 3)
+
+	parameters := len(cmdSlice)
+	if parameters == 1 {
+		// Not enough parameters
+		return
+	}
+
+	// Check if dictator
+	if Backend.IsDictator(m.GuildID, m.Author.ID) == false {
+		s.ChannelMessageSend(m.ChannelID, "Begone pleb.")
+	}
+
+	// Parse user
+	user, ok := DUTIL_ExtractUser(cmdSlice[0])
+	if ok == false {
+		// Not a valid user string
+		return
+	}
+
+	userinfo := Backend.GetUser(user)
+	if userinfo == nil {
+		// Not a valid user
+		return
+	}
+
+	var reason string
+	if parameters == 2 {
+		reason = ""
+	} else {
+		reason = cmdSlice[2]
+	}
+
+	record := DPointRecord{
+		Points: cmdSlice[1],
+		Reason: reason,
+	}
+
+	if Backend.AddDPointRecord(m.GuildID, user, &record) == false {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Could not give points to %s.", userinfo.Name))
+	} else {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Gave %s points to %s.", record.Points, userinfo.Name))
+	}
 }
 
 func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate, prefix string, sub string) {

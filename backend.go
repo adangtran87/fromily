@@ -412,3 +412,28 @@ func (b *ServerBackend) IsDictator(server, user string) bool {
 
 	return serverInfo.Dictator == user
 }
+
+// Dictator check happens in the command
+func (b *ServerBackend) AddDPointRecord(server string, user string, record *DPointRecord) bool {
+	// Validate user and server
+	userdata := b.GetUserData(server, user)
+	if userdata == nil {
+		return false
+	}
+
+	points, err := strconv.ParseInt(record.Points, 10, 32)
+	if err != nil {
+		return false
+	}
+
+	data := fromilyclient.DPointRecord{
+		Points: int32(points),
+		Reason: record.Reason,
+	}
+
+	if b.Client.CreateDPointRecord(server, user, &data) != nil {
+		return false
+	}
+
+	return true
+}

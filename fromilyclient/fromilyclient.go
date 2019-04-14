@@ -57,7 +57,7 @@ type Server struct {
 type DPointRecord struct {
 	Points int32     `json:"points"`
 	Reason string    `json:"reason"`
-	Date   *DateType `json:"date"`
+	Date   *DateType `json:"date,omitempty"`
 }
 
 type UserServerData struct {
@@ -210,6 +210,15 @@ func (s *Client) CreateUser(user *User) error {
 
 func (s *Client) CreateUserServerData(data *UserServerData) error {
 	url := fmt.Sprintf(s.BaseUrl + "userserverdata/")
+	j, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return s.post(url, j)
+}
+
+func (s *Client) CreateDPointRecord(server string, user string, data *DPointRecord) error {
+	url := fmt.Sprintf(s.BaseUrl+"dpoints/?user=%s&server=%s", user, server)
 	j, err := json.Marshal(data)
 	if err != nil {
 		return err
