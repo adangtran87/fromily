@@ -18,6 +18,7 @@ type CommandSet struct {
 
 type Command struct {
 	Name   string
+	Admin  bool
 	Cmd    func(s *discordgo.Session, m *discordgo.MessageCreate, sub string)
 	Subset *CommandSet
 	Help   string
@@ -27,18 +28,21 @@ var Commands = CommandSet{
 	Prefix: "!",
 	Commands: CommandMap{
 		"ping": &Command{
+			Admin:  false,
 			Name:   "ping",
 			Cmd:    ping,
 			Subset: nil,
 			Help:   "Reply with Pong!",
 		},
 		"dictator": &Command{
-			Name: "dictator",
-			Cmd:  dictator,
+			Admin: false,
+			Name:  "dictator",
+			Cmd:   dictator,
 			Subset: &CommandSet{
 				Prefix: "",
 				Commands: CommandMap{
 					"set": &Command{
+						Admin:  true,
 						Name:   "dictator set",
 						Cmd:    dictator_set,
 						Subset: nil,
@@ -103,8 +107,9 @@ func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate,
 	if cmd == "help" {
 		// go help(s, m, &Commands)
 	} else if _, ok := cs.Commands[cmd]; ok {
-		if cs.Commands[cmd].Subset == nil || len(cmdSlice) == 1 {
-			fmt.Println("Running Command: ", cs.Commands[cmd].Name)
+		command := cs.Commands[cmd]
+		if command.Subset == nil || len(cmdSlice) == 1 {
+			fmt.Println("Running Command: ", command.Name)
 
 			var remainder string
 			if len(cmdSlice) == 1 {
@@ -113,9 +118,14 @@ func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate,
 				remainder = cmdSlice[1]
 			}
 
-			go cs.Commands[cmd].Cmd(s, m, remainder)
+			_, adminStatus := Backend.IsAdmin(m.GuildID, m.Author.ID)
+			if command.Admin == true && adminStatus == false {
+				s.ChannelMessageSend(m.ChannelID, ":no_entry_sign: Ah ah ah, you didn't say the magic word. :no_entry_sign:")
+			} else {
+				go command.Cmd(s, m, remainder)
+			}
 		} else {
-			go cs.Commands[cmd].Subset.Dispatch(s, m, "", cmdSlice[1])
+			go command.Subset.Dispatch(s, m, "", cmdSlice[1])
 		}
 	} else {
 		s.ChannelMessageSend(m.ChannelID, GetResp("cmd:unknown", cmd))

@@ -29,11 +29,16 @@ type NewUser struct {
  *
  * Quickly accessible data structure for server information
  */
+
+// @TODO Perhaps use the int as a 'level'?
+type AdminMapType map[string]int
+
 type ServerInfoType struct {
 	Id       uint64
 	Name     string
 	Dictator string
 	UserMap  UserMapType
+	Admins   AdminMapType
 }
 
 type NewServer struct {
@@ -68,6 +73,7 @@ func (b *ServerBackend) RefreshInfo() bool {
 		serverData.Id = s.Id
 		serverData.Name = s.Name
 		serverData.UserMap = UserMapType{}
+		serverData.Admins = AdminMapType{}
 
 		str := strconv.FormatUint(s.Dictator, 10)
 		serverData.Dictator = str
@@ -106,6 +112,7 @@ func (b *ServerBackend) AddServer(n *NewServer) bool {
 	serverData.Name = n.Name
 	serverData.UserMap = UserMapType{}
 	serverData.Dictator = "0"
+	serverData.Admins = AdminMapType{}
 
 	server := fromilyclient.Server{
 		Id:   sId,
@@ -240,6 +247,7 @@ func (b *ServerBackend) AddUser(server string, user *NewUser) bool {
 	return ok
 }
 
+// GetUser
 func (b *ServerBackend) GetUser(user string) *UserInfoType {
 	if b.UserExists(user) == false {
 		return nil
@@ -250,6 +258,37 @@ func (b *ServerBackend) GetUser(user string) *UserInfoType {
 		return nil
 	}
 	return b.UserInfo[userId]
+}
+
+// SetAdmin
+func (b *ServerBackend) SetAdmin(server, user string) bool {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		return false
+	}
+
+	if b.UserExists(user) == false {
+		return false
+	}
+
+	fmt.Printf("Setting Admin - %s:%s\n", server, user)
+	serverInfo.Admins[user] = 1
+	return true
+}
+
+// IsAdmin
+func (b *ServerBackend) IsAdmin(server, user string) (int, bool) {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		return -1, false
+	}
+
+	adminVal, ok := serverInfo.Admins[user]
+	if ok == false {
+		return -1, ok
+	} else {
+		return adminVal, ok
+	}
 }
 
 /*******************************************************************************

@@ -119,6 +119,12 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			}
 		}
 
+		// Set Admins
+		for _, admin := range config.Admins {
+			go Backend.SetAdmin(guild.ID, admin)
+		}
+
+		// Set user data
 		for _, member := range guildInfo.Members {
 			// Add users to backend
 			if Backend.UserExists(member.User.ID) == false {
