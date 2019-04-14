@@ -53,7 +53,11 @@ var Commands = CommandSet{
 
 // Ping command replies with "Pong!"
 func ping(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
-	s.ChannelMessageSend(m.ChannelID, "Pong!")
+	if sub != "" {
+		s.ChannelMessageSend(m.ChannelID, "ping does not support any sub commands.")
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "Pong!")
+	}
 }
 
 func dictator(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
@@ -88,15 +92,19 @@ func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate,
 	if cmd == "help" {
 		// go help(s, m, &Commands)
 	} else if _, ok := cs.Commands[cmd]; ok {
-		if len(cmdSlice) == 1 {
+		if cs.Commands[cmd].Subset == nil || len(cmdSlice) == 1 {
 			fmt.Println("Running Command: ", cs.Commands[cmd].Name)
-			go cs.Commands[cmd].Cmd(s, m, "")
-		} else {
-			if cs.Commands[cmd].Subset != nil {
-				go cs.Commands[cmd].Subset.Dispatch(s, m, "", cmdSlice[1])
+
+			var remainder string
+			if len(cmdSlice) == 1 {
+				remainder = ""
 			} else {
-				s.ChannelMessageSend(m.ChannelID, GetResp("cmd:unknown_sub", cmdSlice[1]))
+				remainder = cmdSlice[1]
 			}
+
+			go cs.Commands[cmd].Cmd(s, m, remainder)
+		} else {
+			go cs.Commands[cmd].Subset.Dispatch(s, m, "", cmdSlice[1])
 		}
 	} else {
 		s.ChannelMessageSend(m.ChannelID, GetResp("cmd:unknown", cmd))
