@@ -111,6 +111,17 @@ func (s *Client) post(url string, j []byte) error {
 	return err
 }
 
+func (s *Client) put(url string, j []byte) error {
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(j))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Token %s", s.Token))
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	_, err = s.doRequest(req)
+	return err
+}
+
 // Client APIs
 func (s *Client) GetServers() ([]*Server, error) {
 	url := fmt.Sprintf(s.BaseUrl + "servers/")
@@ -145,6 +156,34 @@ func (s *Client) GetUserServerData(user uint64, server uint64) (UserServerData, 
 func (s *Client) CreateServer(server *Server) error {
 	url := fmt.Sprintf(s.BaseUrl + "servers/")
 	j, err := json.Marshal(server)
+	if err != nil {
+		return err
+	}
+	return s.post(url, j)
+}
+
+func (s *Client) UpdateServer(server *Server) error {
+	sId := strconv.FormatUint(server.Id, 10)
+	url := fmt.Sprintf(s.BaseUrl + "servers/" + sId + "/")
+	j, err := json.Marshal(server)
+	if err != nil {
+		return err
+	}
+	return s.put(url, j)
+}
+
+func (s *Client) CreateUser(user *User) error {
+	url := fmt.Sprintf(s.BaseUrl + "users/")
+	j, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	return s.post(url, j)
+}
+
+func (s *Client) CreateUserServerData(data *UserServerData) error {
+	url := fmt.Sprintf(s.BaseUrl + "users/")
+	j, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
