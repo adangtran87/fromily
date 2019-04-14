@@ -30,8 +30,7 @@ var prefix_regex *regexp.Regexp
 // Admin command regex configured in main
 var admin_regex *regexp.Regexp
 
-// FIXME: Figure out a better way to create a global variable
-var Fromily = fromilyclient.New("0")
+var Backend = ServerBackend{}
 
 // Opens a discord session and monitors messages sent
 // Processes commands if messages have the appropriate prefix
@@ -47,9 +46,15 @@ func main() {
 	}
 
 	// Create fromily-server session
-	Fromily = fromilyclient.New(config.FromilyToken)
+	Backend.Init()
+	Backend.Client = fromilyclient.New(config.FromilyToken)
 	if err != nil {
 		fmt.Println("Error creating fromily session,", err)
+	}
+
+	if Backend.RefreshInfo() == false {
+		fmt.Println("Error refreshing data from server")
+		return
 	}
 
 	// Create new Discord session
@@ -100,17 +105,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 		guildInfo, _ := s.Guild(guild.ID)
 		fmt.Printf("%s:%s\n", guildInfo.Name, guildInfo.ID)
 
-		// Check if guild exists
-		servers, err := Fromily.GetServers()
-		if err != nil {
-			fmt.Println("Error retrieveing servers,", err)
-		}
-
-		// Populate ServerMap
-		ServerMap.ProcessDataIntoServerMap(servers)
-		fmt.Printf("%+v\n", ServerMap)
-
-		if ServerMap.ServerExists(guild.ID) {
+		if Backend.ServerExists(guild.ID) {
 			fmt.Println("Guild exists: ", guild.ID)
 		} else {
 			fmt.Println("Creating guild: ", guild.ID)
@@ -119,8 +114,8 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 				Id:   guild.ID,
 				Name: guild.Name,
 			}
-			if ServerMap.AddServer(&server) == false {
-				fmt.Println("Error creating server,", err)
+			if Backend.AddServer(&server) == false {
+				fmt.Println("Error creating server: ,", server.Name)
 			}
 		}
 	}

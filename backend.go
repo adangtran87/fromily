@@ -43,11 +43,24 @@ type NewServer struct {
 
 type ServerMapType map[uint64]*ServerInfo
 
-// map of what is on the server
-var ServerMap = ServerMapType{}
+type ServerBackend struct {
+	Client *fromilyclient.Client
+	Info   ServerMapType
+}
+
+func (b *ServerBackend) Init() {
+	b.Info = ServerMapType{}
+}
 
 // Loop through an array of pointers
-func (m ServerMapType) ProcessDataIntoServerMap(servers []*fromilyclient.Server) {
+func (b *ServerBackend) RefreshInfo() bool {
+	// Check if guild exists
+	servers, err := b.Client.GetServers()
+	if err != nil {
+		fmt.Println("Error retrieveing servers,", err)
+		return false
+	}
+
 	for _, s := range servers {
 		var serverData = ServerInfo{}
 		serverData.Id = s.Id
@@ -60,11 +73,12 @@ func (m ServerMapType) ProcessDataIntoServerMap(servers []*fromilyclient.Server)
 		for _, userdata := range s.Users {
 			serverData.UserMap[userdata.User.Id] = &UserInfo{Name: userdata.User.Name}
 		}
-		m[s.Id] = &serverData
+		b.Info[s.Id] = &serverData
 	}
+	return true
 }
 
-func (m ServerMapType) AddServer(n *NewServer) bool {
+func (b *ServerBackend) AddServer(n *NewServer) bool {
 	sId, err := strconv.ParseUint(n.Id, 10, 64)
 	if err != nil {
 		fmt.Println("Error converting guild ID into str,", err)
@@ -83,35 +97,35 @@ func (m ServerMapType) AddServer(n *NewServer) bool {
 		Name: n.Name,
 	}
 	// Create server on server
-	err = Fromily.CreateServer(&server)
+	err = b.Client.CreateServer(&server)
 	if err != nil {
 		return false
 	} else {
 		// Commit to map
-		ServerMap[sId] = &serverData
+		b.Info[sId] = &serverData
 		return true
 	}
 }
 
-func (m ServerMapType) ServerExists(s string) bool {
+func (b *ServerBackend) ServerExists(s string) bool {
 	guildId, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
 		return false
 	}
-	_, ok := ServerMap[guildId]
+	_, ok := b.Info[guildId]
 	return ok
 }
 
 // Function is expected to work with Discord queries
 // So do the conversion inside
-func (m ServerMapType) DictatorExists(s string) bool {
+func (b *ServerBackend) DictatorExists(s string) bool {
 	guildId, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
 		fmt.Println("Error converting user into str,", err)
 		return false
 	}
 
-	if server, ok := m[guildId]; ok == true {
+	if server, ok := b.Info[guildId]; ok == true {
 		if server.Dictator != "0" {
 			return true
 		} else {
