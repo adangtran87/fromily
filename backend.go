@@ -297,3 +297,16 @@ func (b *ServerBackend) SetDictator(server, user string) bool {
 	}
 	return true
 }
+
+func (b *ServerBackend) GetDictator(server string) string {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		return ""
+	}
+
+	if serverInfo.Dictator == "0" || serverInfo.Dictator == "" {
+		return ""
+	}
+
+	return serverInfo.Dictator
+}
