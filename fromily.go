@@ -155,7 +155,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	go CommandDispatch(s, m)
+	go Commands.Dispatch(s, m, config.Prefix, m.Content)
 
 	go AdminDispatch(s, m)
 }

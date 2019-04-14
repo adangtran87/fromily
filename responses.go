@@ -5,7 +5,8 @@ import (
 )
 
 var Responses = map[string]string{
-	"cmd:unknown": ":upside_down: Unknown Command: `%s`",
+	"cmd:unknown":     ":upside_down: Unknown Command: `%s`",
+	"cmd:unknown_sub": ":upside_down: Unknown Sub Command: `%s`",
 }
 
 //TODO: This assumes that all Responses need an argument. Need to figure out a
