@@ -122,32 +122,136 @@ func (b *ServerBackend) AddServer(n *NewServer) bool {
 	}
 }
 
-func (b *ServerBackend) ServerExists(s string) bool {
-	guildId, err := strconv.ParseUint(s, 10, 64)
+func (b *ServerBackend) GetServerInfo(s string) (*ServerInfoType, bool) {
+	server, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
-		return false
+		return nil, false
 	}
-	_, ok := b.ServerInfo[guildId]
+	info, ok := b.ServerInfo[server]
+	return info, ok
+}
+
+func (b *ServerBackend) ServerExists(s string) bool {
+	_, ok := b.GetServerInfo(s)
 	return ok
 }
 
-// Function is expected to work with Discord queries
-// So do the conversion inside
-func (b *ServerBackend) DictatorExists(s string) bool {
-	guildId, err := strconv.ParseUint(s, 10, 64)
+func (b *ServerBackend) UserExists(user string) bool {
+	uId, err := strconv.ParseUint(user, 10, 64)
 	if err != nil {
-		fmt.Println("Error converting user into str,", err)
+		return false
+	}
+	_, ok := b.UserInfo[uId]
+	return ok
+}
+
+func (b *ServerBackend) UserDataExists(server, user string) bool {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
 		return false
 	}
 
-	if server, ok := b.ServerInfo[guildId]; ok == true {
-		if server.Dictator != "0" {
-			return true
-		} else {
-			return false
-		}
+	userId, err := strconv.ParseUint(user, 10, 64)
+	if err != nil {
+		return false
+	}
+
+	_, ok = serverInfo.UserMap[userId]
+	return ok
+}
+
+func (b *ServerBackend) AddUserData(server string, user *NewUser) bool {
+	if b.UserDataExists(server, user.Id) == true {
+		return false
+	}
+
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		return false
+	}
+
+	userId, err := strconv.ParseUint(user.Id, 10, 64)
+	if err != nil {
+		return false
+	}
+
+	userserverdata := fromilyclient.UserServerData{
+		User:   userId,
+		Server: serverInfo.Id,
+	}
+	err = b.Client.CreateUserServerData(&userserverdata)
+	if err != nil {
+		fmt.Println("Error creating userdata on server,", err)
+		return false
+	}
+
+	//@FIXME Shouldn't have to create this and should be able to pass it
+	//       through...
+	userInfo := UserInfoType{
+		Id:   userId,
+		Name: user.Name,
+	}
+
+	// Save to map
+	serverInfo.UserMap[userId] = &userInfo
+	return true
+}
+
+func (b *ServerBackend) AddUser(server string, user *NewUser) bool {
+	// Don't add user if userdata exists (because it means user exists)
+	if b.UserDataExists(server, user.Id) == true {
+		return false
+	}
+
+	ok := b.ServerExists(server)
+	if ok == false {
+		return false
+	}
+
+	userId, err := strconv.ParseUint(user.Id, 10, 64)
+	if err != nil {
+		return false
+	}
+	userInfo := UserInfoType{
+		Id:   userId,
+		Name: user.Name,
+	}
+
+	// UserServerData does not exist so check if user exists
+	if b.UserExists(user.Id) == true {
+		return false
+	}
+
+	// If user doesn't exist, create user on server
+	newUser := fromilyclient.User{
+		Id:   userId,
+		Name: user.Name,
+	}
+	err = b.Client.CreateUser(&newUser)
+	if err != nil {
+		print("Error creating user,", err)
+		return false
+	}
+	b.UserInfo[userId] = &userInfo
+
+	// Create userdata
+	ok = b.AddUserData(server, user)
+
+	return ok
+}
+
+/*******************************************************************************
+ * Dictator
+*******************************************************************************/
+func (b *ServerBackend) DictatorExists(server string) bool {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		return false
+	}
+
+	if serverInfo.Dictator != "0" {
+		return true
 	} else {
-		// No server so return false
 		return false
 	}
 }

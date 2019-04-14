@@ -118,6 +118,30 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 				fmt.Println("Error creating server: ,", server.Name)
 			}
 		}
+
+		for _, member := range guildInfo.Members {
+			// Add users to backend
+			if Backend.UserExists(member.User.ID) == false {
+				user := NewUser{
+					Id:   member.User.ID,
+					Name: member.User.Username,
+				}
+				if Backend.AddUser(guild.ID, &user) == false {
+					fmt.Println("Error creating user: ", user.Id)
+				}
+			}
+
+			// Create userdata
+			if Backend.UserDataExists(guild.ID, member.User.ID) == false {
+				user := NewUser{
+					Id:   member.User.ID,
+					Name: member.User.Username,
+				}
+				if Backend.AddUserData(guild.ID, &user) == false {
+					fmt.Println("Error creating userdata:", guild.ID, user.Id)
+				}
+			}
+		}
 	}
 }
 

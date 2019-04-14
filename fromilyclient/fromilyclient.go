@@ -193,7 +193,7 @@ func (s *Client) CreateUser(user *User) error {
 }
 
 func (s *Client) CreateUserServerData(data *UserServerData) error {
-	url := fmt.Sprintf(s.BaseUrl + "users/")
+	url := fmt.Sprintf(s.BaseUrl + "userserverdata/")
 	j, err := json.Marshal(data)
 	if err != nil {
 		return err
