@@ -12,12 +12,12 @@ import (
 	"github.com/adangtran87/fromily/fromilyclient"
 )
 
-type UserInfo struct {
+type UserInfoType struct {
 	Id   uint64
 	Name string
 }
 
-type UserMapType map[uint64]*UserInfo
+type UserMapType map[uint64]*UserInfoType
 
 type NewUser struct {
 	Id   string
@@ -29,7 +29,7 @@ type NewUser struct {
  *
  * Quickly accessible data structure for server information
  */
-type ServerInfo struct {
+type ServerInfoType struct {
 	Id       uint64
 	Name     string
 	Dictator string
@@ -41,15 +41,17 @@ type NewServer struct {
 	Name string
 }
 
-type ServerMapType map[uint64]*ServerInfo
+type ServerMapType map[uint64]*ServerInfoType
 
 type ServerBackend struct {
-	Client *fromilyclient.Client
-	Info   ServerMapType
+	Client     *fromilyclient.Client
+	ServerInfo ServerMapType
+	UserInfo   UserMapType
 }
 
 func (b *ServerBackend) Init() {
-	b.Info = ServerMapType{}
+	b.ServerInfo = ServerMapType{}
+	b.UserInfo = UserMapType{}
 }
 
 // Loop through an array of pointers
@@ -62,7 +64,7 @@ func (b *ServerBackend) RefreshInfo() bool {
 	}
 
 	for _, s := range servers {
-		var serverData = ServerInfo{}
+		var serverData = ServerInfoType{}
 		serverData.Id = s.Id
 		serverData.Name = s.Name
 		serverData.UserMap = UserMapType{}
@@ -71,9 +73,22 @@ func (b *ServerBackend) RefreshInfo() bool {
 		serverData.Dictator = str
 
 		for _, userdata := range s.Users {
-			serverData.UserMap[userdata.User.Id] = &UserInfo{Name: userdata.User.Name}
+			serverData.UserMap[userdata.User.Id] = &UserInfoType{Name: userdata.User.Name}
 		}
-		b.Info[s.Id] = &serverData
+		b.ServerInfo[s.Id] = &serverData
+	}
+
+	users, err := b.Client.GetUsers()
+	if err != nil {
+		fmt.Println("Error retrieveing users,", err)
+		return false
+	}
+
+	for _, u := range users {
+		b.UserInfo[u.Id] = &UserInfoType{
+			Id:   u.Id,
+			Name: u.Name,
+		}
 	}
 	return true
 }
@@ -86,7 +101,7 @@ func (b *ServerBackend) AddServer(n *NewServer) bool {
 	}
 
 	// Add server to ServerMapHash
-	var serverData = ServerInfo{}
+	var serverData = ServerInfoType{}
 	serverData.Id = sId
 	serverData.Name = n.Name
 	serverData.UserMap = UserMapType{}
@@ -102,7 +117,7 @@ func (b *ServerBackend) AddServer(n *NewServer) bool {
 		return false
 	} else {
 		// Commit to map
-		b.Info[sId] = &serverData
+		b.ServerInfo[sId] = &serverData
 		return true
 	}
 }
@@ -112,7 +127,7 @@ func (b *ServerBackend) ServerExists(s string) bool {
 	if err != nil {
 		return false
 	}
-	_, ok := b.Info[guildId]
+	_, ok := b.ServerInfo[guildId]
 	return ok
 }
 
@@ -125,7 +140,7 @@ func (b *ServerBackend) DictatorExists(s string) bool {
 		return false
 	}
 
-	if server, ok := b.Info[guildId]; ok == true {
+	if server, ok := b.ServerInfo[guildId]; ok == true {
 		if server.Dictator != "0" {
 			return true
 		} else {

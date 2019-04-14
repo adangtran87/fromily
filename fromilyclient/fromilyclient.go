@@ -134,6 +134,17 @@ func (s *Client) GetServers() ([]*Server, error) {
 	return data, nil
 }
 
+func (s *Client) GetUsers() ([]*User, error) {
+	url := fmt.Sprintf(s.BaseUrl + "users/")
+	bytes, err := s.get(url)
+	var data []*User
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (s *Client) GetServerData(server uint64) ([]*UserServerData, error) {
 	url := fmt.Sprintf(s.BaseUrl+"userserverdata/?server=%s", strconv.FormatUint(server, 10))
 	bytes, err := s.get(url)
