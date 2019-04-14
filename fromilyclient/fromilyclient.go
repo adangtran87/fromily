@@ -134,6 +134,17 @@ func (s *Client) GetServers() ([]*Server, error) {
 	return data, nil
 }
 
+func (s *Client) GetServer(server uint64) (*Server, error) {
+	url := fmt.Sprintf(s.BaseUrl+"servers/%s/", strconv.FormatUint(server, 10))
+	bytes, err := s.get(url)
+	var data Server
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
 func (s *Client) GetUsers() ([]*User, error) {
 	url := fmt.Sprintf(s.BaseUrl + "users/")
 	bytes, err := s.get(url)
@@ -174,8 +185,7 @@ func (s *Client) CreateServer(server *Server) error {
 }
 
 func (s *Client) UpdateServer(server *Server) error {
-	sId := strconv.FormatUint(server.Id, 10)
-	url := fmt.Sprintf(s.BaseUrl + "servers/" + sId + "/")
+	url := fmt.Sprintf(s.BaseUrl+"servers/%s/", strconv.FormatUint(server.Id, 10))
 	j, err := json.Marshal(server)
 	if err != nil {
 		return err

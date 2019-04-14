@@ -255,3 +255,45 @@ func (b *ServerBackend) DictatorExists(server string) bool {
 		return false
 	}
 }
+
+func (b *ServerBackend) SetDictator(server, user string) bool {
+	serverInfo, ok := b.GetServerInfo(server)
+	if ok == false {
+		// This server does not exist
+		return false
+	}
+
+	if serverInfo.Dictator == user {
+		// User is already Dictator
+		return false
+	}
+
+	if b.UserDataExists(server, user) == false {
+		// Userdata does not exist for this server
+		return false
+	}
+
+	if b.UserExists(user) == false {
+		// User does not exist
+		return false
+	}
+
+	userId, err := strconv.ParseUint(user, 10, 64)
+	if err != nil {
+		return false
+	}
+
+	// Set Dictator
+	data, err := b.Client.GetServer(serverInfo.Id)
+	if err != nil {
+		return false
+	}
+	data.Dictator = userId
+	// Clear out to send less data
+	data.Users = []fromilyclient.UserData{}
+	err = b.Client.UpdateServer(data)
+	if err != nil {
+		return false
+	}
+	return true
+}
