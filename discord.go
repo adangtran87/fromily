@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -57,4 +58,15 @@ func GetRoleCount(s *discordgo.Session, guild string) (roleSummary []*RoleInfo) 
 		}
 	}
 	return roleSummary
+}
+
+// Discord Utility functions
+func DUTIL_ExtractUser(user string) (string, bool) {
+	regex := regexp.MustCompile(`<@(\d+)>`)
+	parsedUser := regex.FindStringSubmatch(user)
+	if parsedUser == nil {
+		return "", false
+	} else {
+		return parsedUser[1], true
+	}
 }

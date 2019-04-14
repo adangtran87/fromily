@@ -54,7 +54,7 @@ var Commands = CommandSet{
 // Ping command replies with "Pong!"
 func ping(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 	if sub != "" {
-		s.ChannelMessageSend(m.ChannelID, "ping does not support any sub commands.")
+		return
 	} else {
 		s.ChannelMessageSend(m.ChannelID, "Pong!")
 	}
@@ -65,12 +65,23 @@ func dictator(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 	if dictator == "" {
 		s.ChannelMessageSend(m.ChannelID, "Server has no dictator!")
 	} else {
-		s.ChannelMessageSend(m.ChannelID, dictator)
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("All hail, %s!", dictator))
 	}
 }
 
 func dictator_set(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
-	s.ChannelMessageSend(m.ChannelID, "I will implement this tomorrow.")
+	cmdSlice := strings.SplitN(sub, " ", 2)
+	if len(cmdSlice) > 1 {
+		return
+	}
+	userid, ok := DUTIL_ExtractUser(sub)
+	if ok == false {
+		return
+	} else {
+		if Backend.SetDictator(m.GuildID, userid) {
+			dictator(s, m, "")
+		}
+	}
 }
 
 func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate, prefix string, sub string) {

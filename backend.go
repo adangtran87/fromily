@@ -240,6 +240,18 @@ func (b *ServerBackend) AddUser(server string, user *NewUser) bool {
 	return ok
 }
 
+func (b *ServerBackend) GetUser(user string) *UserInfoType {
+	if b.UserExists(user) == false {
+		return nil
+	}
+
+	userId, err := strconv.ParseUint(user, 10, 64)
+	if err != nil {
+		return nil
+	}
+	return b.UserInfo[userId]
+}
+
 /*******************************************************************************
  * Dictator
 *******************************************************************************/
@@ -295,6 +307,9 @@ func (b *ServerBackend) SetDictator(server, user string) bool {
 	if err != nil {
 		return false
 	}
+
+	// Save to map
+	serverInfo.Dictator = user
 	return true
 }
 
@@ -308,5 +323,10 @@ func (b *ServerBackend) GetDictator(server string) string {
 		return ""
 	}
 
-	return serverInfo.Dictator
+	user := b.GetUser(serverInfo.Dictator)
+	if user == nil {
+		return ""
+	}
+
+	return user.Name
 }
