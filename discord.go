@@ -65,7 +65,7 @@ func GetRoleCount(s *discordgo.Session, guild string) (roleSummary []*RoleInfo) 
 
 // Return empty string if invalid user
 func DUTIL_ExtractUserMention(user string) string {
-	regex := regexp.MustCompile(`<@(\d+)>`)
+	regex := regexp.MustCompile(`<@!?(\d+)>`)
 	parsedUser := regex.FindStringSubmatch(user)
 	if parsedUser == nil {
 		return ""
