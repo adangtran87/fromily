@@ -12,7 +12,6 @@ type CommandMap map[string]*Command
 
 type CommandSet struct {
 	Name     string
-	Prefix   string
 	Commands CommandMap
 }
 
@@ -25,7 +24,6 @@ type Command struct {
 }
 
 var Commands = CommandSet{
-	Prefix: "!",
 	Commands: CommandMap{
 		"ping": &Command{
 			Admin:  false,
@@ -39,7 +37,6 @@ var Commands = CommandSet{
 			Name:  "dictator",
 			Cmd:   dictator,
 			Subset: &CommandSet{
-				Prefix: "",
 				Commands: CommandMap{
 					"set": &Command{
 						Admin:  true,
@@ -57,7 +54,6 @@ var Commands = CommandSet{
 			Name:  "dpoints",
 			Cmd:   dpoints,
 			Subset: &CommandSet{
-				Prefix: "",
 				Commands: CommandMap{
 					"help": &Command{
 						Admin:  false,
@@ -274,10 +270,10 @@ func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate,
 	if prefix != "" {
 		regex := regexp.MustCompile(`^` + prefix + `(\w+)`)
 		cmdstr := regex.FindStringSubmatch(cmdSlice[0])
-		cmd = cmdstr[1]
 		if cmdstr == nil {
 			return
 		}
+		cmd = cmdstr[1]
 	} else {
 		cmd = cmdSlice[0]
 	}

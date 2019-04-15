@@ -71,8 +71,6 @@ func main() {
 	if config.Prefix == "" {
 		panic("FROMILY_ERROR: Invalid prefix!")
 	}
-	// Compile regexes for use
-	prefix_regex = regexp.MustCompile(`^` + config.Prefix + `(\w+)`)
 
 	if config.AdminPrefix == "" {
 		panic("FROMILY_ERROR: Invalid admin prefix!")
