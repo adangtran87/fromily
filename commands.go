@@ -107,6 +107,7 @@ func dictator_set(s *discordgo.Session, m *discordgo.MessageCreate, sub string) 
 }
 
 func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+
 	//@TODO Support querying other people
 	if sub != "" {
 		return
@@ -116,18 +117,25 @@ func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 		return
 	}
 
-	var out strings.Builder
-	out.WriteString(fmt.Sprintf("Total: %s", data.DPoints))
+	var fields = []*discordgo.MessageEmbedField{}
 
 	if len(data.DPointLog) > 0 {
-		out.WriteString("\n\nLast 5 Records:\n")
+		for _, record := range data.DPointLog {
+			fieldEntry := &discordgo.MessageEmbedField{
+				Name:  fmt.Sprintf("__%s__", record.Date),
+				Value: fmt.Sprintf("**%s**: *%-s*", record.Points, record.Reason),
+			}
+			fields = append(fields, fieldEntry)
+		}
 	}
 
-	for _, record := range data.DPointLog {
-		out.WriteString(fmt.Sprintf("- %s: %s \"%s\"\n", record.Date, record.Points, record.Reason))
+	embed := &discordgo.MessageEmbed{
+		Color:  0xd4d2ff, //@TODO Get color from command set
+		Title:  fmt.Sprintf("**Total**: %s", data.DPoints),
+		Fields: fields,
 	}
 
-	s.ChannelMessageSend(m.ChannelID, out.String())
+	s.ChannelMessageSendEmbed(m.ChannelID, embed)
 }
 
 func dpoints_give(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
