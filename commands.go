@@ -227,6 +227,7 @@ func dpoints_give(s *discordgo.Session, m *discordgo.MessageCreate, sub string) 
 	// Check if dictator
 	if Backend.IsDictator(m.GuildID, m.Author.ID) == false {
 		s.ChannelMessageSend(m.ChannelID, "Begone pleb.")
+		return
 	}
 
 	// Parse user; if there is a mention extract user from it
