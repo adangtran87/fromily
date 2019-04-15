@@ -31,6 +31,8 @@ type DPointRecord struct {
 }
 
 type UserData struct {
+	User      string
+	Server    string
 	DPoints   string
 	DPointLog []*DPointRecord
 }
@@ -436,4 +438,27 @@ func (b *ServerBackend) AddDPointRecord(server string, user string, record *DPoi
 	}
 
 	return true
+}
+
+func (b *ServerBackend) GetLeaderboard(server string) []*UserData {
+	if b.ServerExists(server) == false {
+		return nil
+	}
+
+	data, err := b.Client.GetLeaderboard(server)
+	if err != nil {
+		return nil
+	}
+
+	var leaderboard = []*UserData{}
+
+	for _, entry := range data {
+		userinfo := b.GetUser(strconv.FormatUint(entry.User, 10))
+		leaderEntry := UserData{
+			User:    userinfo.Name,
+			DPoints: strconv.FormatInt(int64(entry.Dpoints), 10),
+		}
+		leaderboard = append(leaderboard, &leaderEntry)
+	}
+	return leaderboard
 }

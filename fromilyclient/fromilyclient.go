@@ -225,3 +225,11 @@ func (s *Client) CreateDPointRecord(server string, user string, data *DPointReco
 	}
 	return s.post(url, j)
 }
+
+func (s *Client) GetLeaderboard(server string) ([]*UserServerData, error) {
+	url := fmt.Sprintf(s.BaseUrl+"userserverdata/leaderboard/?server=%s", server)
+	bytes, err := s.get(url)
+	var data []*UserServerData
+	err = json.Unmarshal(bytes, &data)
+	return data, err
+}

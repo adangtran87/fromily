@@ -60,9 +60,16 @@ var Commands = CommandSet{
 				Prefix: "",
 				Commands: CommandMap{
 					"give": &Command{
-						Admin:  true,
+						Admin:  false,
 						Name:   "dpoints give",
 						Cmd:    dpoints_give,
+						Subset: nil,
+						Help:   "Give the dpoints :eyes:",
+					},
+					"top": &Command{
+						Admin:  false,
+						Name:   "dpoints top",
+						Cmd:    dpoints_top,
 						Subset: nil,
 						Help:   "Give the dpoints :eyes:",
 					},
@@ -132,6 +139,40 @@ func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 	embed := &discordgo.MessageEmbed{
 		Color:  0xd4d2ff, //@TODO Get color from command set
 		Title:  fmt.Sprintf("**Total**: %s", data.DPoints),
+		Fields: fields,
+	}
+
+	s.ChannelMessageSendEmbed(m.ChannelID, embed)
+}
+
+func dpoints_top(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+	if sub != "" {
+		return
+	}
+
+	data := Backend.GetLeaderboard(m.GuildID)
+	if data == nil {
+		return
+	}
+
+	var fields = []*discordgo.MessageEmbedField{}
+
+	for _, record := range data {
+		fieldEntry := &discordgo.MessageEmbedField{
+			Name:  fmt.Sprintf("__%s__", record.User),
+			Value: fmt.Sprintf("**%s**", record.DPoints),
+		}
+		fields = append(fields, fieldEntry)
+	}
+
+	serverInfo, ok := Backend.GetServerInfo(m.GuildID)
+	if ok == false {
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Color:  0xd4d2ff, //@TODO Get color from command set
+		Title:  fmt.Sprintf("**Top 5 for %s**", serverInfo.Name),
 		Fields: fields,
 	}
 
