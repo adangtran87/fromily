@@ -86,22 +86,21 @@ func DUTIL_ValidateUser(user string) string {
 
 func DUTIL_UpdateMember(m *discordgo.Member) {
 	// Add users to backend
+	user := NewUser{
+		Id:   m.User.ID,
+		Name: m.User.Username,
+	}
+
 	if Backend.UserExists(m.User.ID) == false {
-		user := NewUser{
-			Id:   m.User.ID,
-			Name: m.User.Username,
-		}
 		if Backend.AddUser(m.GuildID, &user) == false {
 			fmt.Println("Error creating user: ", user.Id)
 		}
+	} else {
+		go Backend.UpdateUser(&user)
 	}
 
 	// Create userdata
 	if Backend.UserDataExists(m.GuildID, m.User.ID) == false {
-		user := NewUser{
-			Id:   m.User.ID,
-			Name: m.User.Username,
-		}
 		if Backend.AddUserData(m.GuildID, &user) == false {
 			fmt.Println("Error creating userdata:", m.GuildID, m.User.ID)
 		}

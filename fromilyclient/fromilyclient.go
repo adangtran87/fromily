@@ -208,6 +208,15 @@ func (s *Client) CreateUser(user *User) error {
 	return s.post(url, j)
 }
 
+func (s *Client) UpdateUser(user *User) error {
+	url := fmt.Sprintf(s.BaseUrl+"users/%s/", strconv.FormatUint(user.Id, 10))
+	j, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	return s.put(url, j)
+}
+
 func (s *Client) CreateUserServerData(data *UserServerData) error {
 	url := fmt.Sprintf(s.BaseUrl + "userserverdata/")
 	j, err := json.Marshal(data)

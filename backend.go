@@ -203,6 +203,28 @@ func (b *ServerBackend) GetUserData(server, user string) *UserData {
 	return &userdata
 }
 
+// Update user if necessary
+// @FIXME should probably refactor checks into here
+func (b *ServerBackend) UpdateUser(nUser *NewUser) {
+	user := b.GetUser(nUser.Id)
+	if user == nil {
+		return
+	}
+
+	if user.Name == nUser.Name {
+		return
+	}
+
+	update := fromilyclient.User{
+		Id:   user.Id,
+		Name: nUser.Name,
+	}
+	err := b.Client.UpdateUser(&update)
+	if err != nil {
+		user.Name = nUser.Name
+	}
+}
+
 func (b *ServerBackend) AddUserData(server string, user *NewUser) bool {
 	if b.UserDataExists(server, user.Id) == true {
 		return false
