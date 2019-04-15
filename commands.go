@@ -59,6 +59,13 @@ var Commands = CommandSet{
 			Subset: &CommandSet{
 				Prefix: "",
 				Commands: CommandMap{
+					"help": &Command{
+						Admin:  false,
+						Name:   "dpoints help",
+						Cmd:    dpoints_help,
+						Subset: nil,
+						Help:   "Give the dpoints :eyes:",
+					},
 					"give": &Command{
 						Admin:  false,
 						Name:   "dpoints give",
@@ -111,6 +118,25 @@ func dictator_set(s *discordgo.Session, m *discordgo.MessageCreate, sub string) 
 			dictator(s, m, "")
 		}
 	}
+}
+
+func dpoints_help(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+	if sub != "" {
+		return
+	}
+
+	var help strings.Builder
+	help.WriteString("Dictator and Plebs:\n")
+	help.WriteString("```\n")
+	help.WriteString("!dpoints - Display your points and previously 5 entries\n")
+	help.WriteString("!dpoints top - Display top 5 users with highest points\n")
+	help.WriteString("```\n")
+	help.WriteString("Dictator Only:\n")
+	help.WriteString("```\n")
+	help.WriteString("!dpoints give @user points [reason]\n")
+	help.WriteString("```")
+
+	s.ChannelMessageSend(m.ChannelID, help.String())
 }
 
 func dpoints(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
@@ -256,9 +282,7 @@ func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate,
 		cmd = cmdSlice[0]
 	}
 
-	if cmd == "help" {
-		// go help(s, m, &Commands)
-	} else if _, ok := cs.Commands[cmd]; ok {
+	if _, ok := cs.Commands[cmd]; ok {
 		command := cs.Commands[cmd]
 		if command.Subset == nil || len(cmdSlice) == 1 {
 			fmt.Println("Running Command: ", command.Name)
