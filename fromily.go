@@ -72,11 +72,6 @@ func main() {
 		panic("FROMILY_ERROR: Invalid prefix!")
 	}
 
-	if config.AdminPrefix == "" {
-		panic("FROMILY_ERROR: Invalid admin prefix!")
-	}
-	admin_regex = regexp.MustCompile(`^` + config.AdminPrefix + `(\w+)`)
-
 	discord.AddHandler(ready)
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(guildMemberAdd)
@@ -117,8 +112,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	go Commands.Dispatch(s, m, config.Prefix, m.Content)
-
-	go AdminDispatch(s, m)
 }
 
 // GuildMemberAdd event
