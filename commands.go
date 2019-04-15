@@ -116,15 +116,28 @@ func dictator(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 }
 
 func dictator_set(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+	fmt.Println(sub)
 	cmdSlice := strings.SplitN(sub, " ", 2)
 	if len(cmdSlice) > 1 {
+		fmt.Println("Unexpected parameter")
 		return
 	}
-	userid := DUTIL_ExtractUserMention(sub)
-	if userid == "" {
+
+	numMentions := len(m.Mentions)
+	var user string
+	if numMentions > 1 {
+		// Do not allow more than one mention in this command.
+		return
+	} else if numMentions == 1 {
+		user = DUTIL_ExtractUserMention(cmdSlice[0])
+	} else {
+		user = DUTIL_ValidateUser(cmdSlice[0])
+	}
+
+	if user == "" {
 		return
 	} else {
-		if Backend.SetDictator(m.GuildID, userid) {
+		if Backend.SetDictator(m.GuildID, user) {
 			dictator(s, m, "")
 		}
 	}
@@ -188,6 +201,7 @@ func dpoints_top(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
 
 	data := Backend.GetLeaderboard(m.GuildID)
 	if data == nil {
+		fmt.Println("DPOINTS_TOP: Cannot get backend")
 		return
 	}
 

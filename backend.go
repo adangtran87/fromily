@@ -368,39 +368,48 @@ func (b *ServerBackend) SetDictator(server, user string) bool {
 	serverInfo, ok := b.GetServerInfo(server)
 	if ok == false {
 		// This server does not exist
+		fmt.Println("SET_DICT: Server does not exist")
 		return false
 	}
 
 	if serverInfo.Dictator == user {
 		// User is already Dictator
+		fmt.Println("SET_DICT: User is already dictator")
 		return false
 	}
 
 	if b.UserDataExists(server, user) == false {
 		// Userdata does not exist for this server
+		fmt.Println("SET_DICT: User is already dictator")
 		return false
 	}
 
 	if b.UserExists(user) == false {
 		// User does not exist
+		fmt.Println("SET_DICT: User does not exist")
 		return false
 	}
 
 	userId, err := strconv.ParseUint(user, 10, 64)
 	if err != nil {
+		fmt.Println("SET_DICT: Cannot parse user id")
 		return false
 	}
 
 	// Set Dictator
 	data, err := b.Client.GetServer(serverInfo.Id)
 	if err != nil {
+		fmt.Println("SET_DICT: Cannot get server data")
 		return false
 	}
+	fmt.Println(data)
 	data.Dictator = userId
 	// Clear out to send less data
-	data.Users = []fromilyclient.UserData{}
+	data.Users = nil
+	fmt.Println(data)
 	err = b.Client.UpdateServer(data)
 	if err != nil {
+		fmt.Println("SET_DICT: Cannot update server")
 		return false
 	}
 
@@ -441,11 +450,13 @@ func (b *ServerBackend) AddDPointRecord(server string, user string, record *DPoi
 	// Validate user and server
 	userdata := b.GetUserData(server, user)
 	if userdata == nil {
+		fmt.Println("ADD_DPOINT: Could not get userdata")
 		return false
 	}
 
 	points, err := strconv.ParseInt(record.Points, 10, 32)
 	if err != nil {
+		fmt.Println("ADD_DPOINT: Could not parse int")
 		return false
 	}
 
@@ -455,6 +466,7 @@ func (b *ServerBackend) AddDPointRecord(server string, user string, record *DPoi
 	}
 
 	if b.Client.CreateDPointRecord(server, user, &data) != nil {
+		fmt.Println("ADD_DPOINT: Could not create record")
 		return false
 	}
 
@@ -468,6 +480,7 @@ func (b *ServerBackend) GetLeaderboard(server string) []*UserData {
 
 	data, err := b.Client.GetLeaderboard(server)
 	if err != nil {
+		fmt.Println("BACK: Cannot get leaderboard via client")
 		return nil
 	}
 
