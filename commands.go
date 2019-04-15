@@ -314,7 +314,5 @@ func (cs *CommandSet) Dispatch(s *discordgo.Session, m *discordgo.MessageCreate,
 		} else {
 			go command.Subset.Dispatch(s, m, "", cmdSlice[1])
 		}
-	} else {
-		s.ChannelMessageSend(m.ChannelID, GetResp("cmd:unknown", cmd))
 	}
 }
