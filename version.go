@@ -21,5 +21,5 @@ func (v *Version) String() string {
 var Ver = Version{
 	0,
 	0,
-	1,
+	2,
 }
