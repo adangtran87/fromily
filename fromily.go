@@ -81,6 +81,7 @@ func main() {
 
 	discord.AddHandler(ready)
 	discord.AddHandler(messageCreate)
+	discord.AddHandler(guildMemberAdd)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = discord.Open()
@@ -102,52 +103,7 @@ func main() {
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	// event.Guilds retreives a list of connected guild ids
 	for _, guild := range event.Guilds {
-		guildInfo, _ := s.Guild(guild.ID)
-		fmt.Printf("%s:%s\n", guildInfo.Name, guildInfo.ID)
-
-		if Backend.ServerExists(guild.ID) {
-			fmt.Println("Guild exists: ", guild.ID)
-		} else {
-			fmt.Println("Creating guild: ", guild.ID)
-
-			server := NewServer{
-				Id:   guild.ID,
-				Name: guild.Name,
-			}
-			if Backend.AddServer(&server) == false {
-				fmt.Println("Error creating server: ,", server.Name)
-			}
-		}
-
-		// Set Admins
-		for _, admin := range config.Admins {
-			go Backend.SetAdmin(guild.ID, admin)
-		}
-
-		// Set user data
-		for _, member := range guildInfo.Members {
-			// Add users to backend
-			if Backend.UserExists(member.User.ID) == false {
-				user := NewUser{
-					Id:   member.User.ID,
-					Name: member.User.Username,
-				}
-				if Backend.AddUser(guild.ID, &user) == false {
-					fmt.Println("Error creating user: ", user.Id)
-				}
-			}
-
-			// Create userdata
-			if Backend.UserDataExists(guild.ID, member.User.ID) == false {
-				user := NewUser{
-					Id:   member.User.ID,
-					Name: member.User.Username,
-				}
-				if Backend.AddUserData(guild.ID, &user) == false {
-					fmt.Println("Error creating userdata:", guild.ID, user.Id)
-				}
-			}
-		}
+		DUTIL_UpdateGuildInfo(s, guild)
 	}
 }
 
@@ -164,4 +120,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	go Commands.Dispatch(s, m, config.Prefix, m.Content)
 
 	go AdminDispatch(s, m)
+}
+
+// GuildMemberAdd event
+func guildMemberAdd(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+	DUTIL_UpdateMember(m.Member)
 }

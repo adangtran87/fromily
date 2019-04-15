@@ -307,7 +307,6 @@ func (b *ServerBackend) SetAdmin(server, user string) bool {
 		return false
 	}
 
-	fmt.Printf("Setting Admin - %s:%s\n", server, user)
 	serverInfo.Admins[user] = 1
 	return true
 }

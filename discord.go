@@ -83,3 +83,55 @@ func DUTIL_ValidateUser(user string) string {
 	}
 	return user
 }
+
+func DUTIL_UpdateMember(m *discordgo.Member) {
+	// Add users to backend
+	if Backend.UserExists(m.User.ID) == false {
+		user := NewUser{
+			Id:   m.User.ID,
+			Name: m.User.Username,
+		}
+		if Backend.AddUser(m.GuildID, &user) == false {
+			fmt.Println("Error creating user: ", user.Id)
+		}
+	}
+
+	// Create userdata
+	if Backend.UserDataExists(m.GuildID, m.User.ID) == false {
+		user := NewUser{
+			Id:   m.User.ID,
+			Name: m.User.Username,
+		}
+		if Backend.AddUserData(m.GuildID, &user) == false {
+			fmt.Println("Error creating userdata:", m.GuildID, m.User.ID)
+		}
+	}
+}
+
+func DUTIL_UpdateGuildInfo(s *discordgo.Session, guild *discordgo.Guild) {
+	guildInfo, _ := s.Guild(guild.ID)
+	fmt.Printf("%s:%s\n", guildInfo.Name, guildInfo.ID)
+
+	if Backend.ServerExists(guild.ID) {
+	} else {
+		fmt.Println("Creating guild: ", guild.ID)
+
+		server := NewServer{
+			Id:   guild.ID,
+			Name: guild.Name,
+		}
+		if Backend.AddServer(&server) == false {
+			fmt.Println("Error creating server: ,", server.Name)
+		}
+	}
+
+	// Set Admins
+	for _, admin := range config.Admins {
+		go Backend.SetAdmin(guild.ID, admin)
+	}
+
+	// Set user data
+	for _, member := range guildInfo.Members {
+		DUTIL_UpdateMember(member)
+	}
+}
