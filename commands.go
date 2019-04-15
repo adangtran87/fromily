@@ -25,6 +25,13 @@ type Command struct {
 
 var Commands = CommandSet{
 	Commands: CommandMap{
+		"version": &Command{
+			Admin:  false,
+			Name:   "version",
+			Cmd:    version,
+			Subset: nil,
+			Help:   "Retreive bot version number",
+		},
 		"ping": &Command{
 			Admin:  false,
 			Name:   "ping",
@@ -81,6 +88,13 @@ var Commands = CommandSet{
 			Help: "Return the number of dpoints for the user",
 		},
 	},
+}
+
+func version(s *discordgo.Session, m *discordgo.MessageCreate, sub string) {
+	if sub != "" {
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, Ver.String())
 }
 
 // Ping command replies with "Pong!"
