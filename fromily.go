@@ -80,6 +80,7 @@ func main() {
 	discord.AddHandler(ready)
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(guildMemberAdd)
+	discord.AddHandler(guildCreate)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = discord.Open()
@@ -123,4 +124,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 // GuildMemberAdd event
 func guildMemberAdd(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	DUTIL_UpdateMember(m.Member)
+}
+
+func guildCreate(s *discordgo.Session, g *discordgo.GuildCreate) {
+	DUTIL_UpdateGuildInfo(s, g.Guild)
 }
